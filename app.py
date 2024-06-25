@@ -65,7 +65,7 @@ st.markdown("""
         color: #ffffff;
     }
     .main {
-        background-color: #000000;
+        background-color: #0e1117;
         padding: 20px;
     }
     .title {
