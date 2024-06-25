@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
+import urllib.parse
 
 # Load data
 popular_df = pickle.load(open('popular.pkl', 'rb'))
@@ -33,6 +34,11 @@ def recommend(book_name):
         item['title'] = book_title
         item['author'] = book_info['Book-Author'].values[0]
         item['image_url'] = book_info['Image-URL-M'].values[0]
+
+        # Create Google Books search URL
+        query = f"{item['title']} {item['author']}"
+        item['link'] = f"https://www.google.com/search?q={urllib.parse.quote(query)}&tbm=bks"
+
         recommended_books.append(item)
 
     return recommended_books
@@ -67,7 +73,7 @@ st.markdown("""
         text-align: center;
         font-size: 3em;
         font-weight: bold;
-        
+
     }
     .subheader {
         color: yellow;
@@ -79,15 +85,16 @@ st.markdown("""
     .recommendations {
         margin-top: 30px;
     }
-    .book-title {
+    .book-title a {
         font-size: 1.2em;
         font-weight: bold;
-        color: #ffffff;
+        color: red;
+        text-decoration: none;
     }
     .book-author {
         color: #aaaaaa;
     }
-    
+
     </style>
 """, unsafe_allow_html=True)
 
@@ -116,7 +123,9 @@ if st.button('Show Recommendation'):
                 book = recommended_books[i + idx]
                 with col:
                     st.image(book['image_url'], width=100)
-                    st.markdown(f"<div class='book-title'>{book['title']}</div>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div class='book-title'><a href='{book['link']}' target='_blank'>{book['title']}</a></div>",
+                        unsafe_allow_html=True)
                     st.markdown(f"<div class='book-author'>by {book['author']}</div>", unsafe_allow_html=True)
         # Add padding between rows
         st.markdown("<div style='padding: 10px;'></div>", unsafe_allow_html=True)
