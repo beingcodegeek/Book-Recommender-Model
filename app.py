@@ -61,7 +61,7 @@ st.set_page_config(page_title="HobbyHub - Book Recommender", page_icon="📚", l
 st.markdown("""
     <style>
     body {
-        background-color: #000000;
+        background-color: #0e1117;
         color: #ffffff;
     }
     .main {
