@@ -10,20 +10,33 @@ pt = pickle.load(open('pt.pkl', 'rb'))
 books = pickle.load(open('books.pkl', 'rb'))
 similarity_score = pickle.load(open('similarity_scores.pkl', 'rb'))
 
+
 def recommend(book_name):
     # fetching the index
-    index = np.where(pt.index == book_name)[0][0]
+    try:
+        index = np.where(pt.index == book_name)[0][0]
+    except IndexError:
+        st.error(f"Book '{book_name}' not found in the index.")
+        return []
+
     similar_items = sorted(list(enumerate(similarity_score[index])), key=lambda x: x[1], reverse=True)[1:6]
 
     recommended_books = []
     for i in similar_items:
         item = {}
-        item['title'] = pt.index[i[0]]
-        item['author'] = books[books['Book-Title'] == pt.index[i[0]]]['Book-Author'].values[0]
-        item['image_url'] = books[books['Book-Title'] == pt.index[i[0]]]['Image-URL-M'].values[0]
+        book_title = pt.index[i[0]]
+        book_info = books[books['Book-Title'] == book_title]
+
+        if book_info.empty:
+            continue
+
+        item['title'] = book_title
+        item['author'] = book_info['Book-Author'].values[0]
+        item['image_url'] = book_info['Image-URL-M'].values[0]
         recommended_books.append(item)
 
     return recommended_books
+
 
 def load_lottieurl(url: str):
     r = requests.get(url)
@@ -31,19 +44,62 @@ def load_lottieurl(url: str):
         return None
     return r.json()
 
+
 # Load Lottie animation
 lottie_animation = load_lottieurl("https://lottie.host/da4c00cd-b1dc-4f07-b9ff-f8f502fd08e4/L5eqGNoUdy.json")
 
-# Streamlit app
-st.set_page_config(page_title="The Book Recommender", page_icon=":book:")
+# Streamlit app configuration
+st.set_page_config(page_title="HobbyHub - Book Recommender", page_icon="📚", layout="wide")
 
-st.title("📚 Book Recommender Model")
+# Custom CSS for better styling
+st.markdown("""
+    <style>
+    body {
+        background-color: #000000;
+        color: #ffffff;
+    }
+    .main {
+        background-color: #000000;
+        padding: 20px;
+    }
+    .title {
+        color: red;
+        text-align: center;
+        font-size: 3em;
+        font-weight: bold;
+        
+    }
+    .subheader {
+        color: yellow;
+        text-align: center;
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px red;
+    }
+    .recommendations {
+        margin-top: 30px;
+    }
+    .book-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #ffffff;
+    }
+    .book-author {
+        color: #aaaaaa;
+    }
+    
+    </style>
+""", unsafe_allow_html=True)
 
-# Display Lottie animation
+# Title and Lottie animation
+st.markdown("<div class='title'>The Book 📚 Recommender</div>", unsafe_allow_html=True)
+st.markdown("<div class='subheader'>Discover your next favorite book!</div>", unsafe_allow_html=True)
+
 if lottie_animation:
     st_lottie(lottie_animation, height=200)
 
 # Dropdown to select a book
+st.markdown("### Select a Book")
 book_list = popular_df['Book-Title'].values
 selected_book = st.selectbox("Type or select a book from the dropdown", book_list)
 
@@ -52,6 +108,7 @@ if st.button('Show Recommendation'):
         recommended_books = recommend(selected_book)
 
     st.write("### Recommended Books")
+    st.markdown("<div class='recommendations'>", unsafe_allow_html=True)
     for i in range(0, len(recommended_books), 5):
         cols = st.columns(5)
         for idx, col in enumerate(cols):
@@ -59,11 +116,14 @@ if st.button('Show Recommendation'):
                 book = recommended_books[i + idx]
                 with col:
                     st.image(book['image_url'], width=100)
-                    st.write(f"**{book['title']}** by {book['author']}")
+                    st.markdown(f"<div class='book-title'>{book['title']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='book-author'>by {book['author']}</div>", unsafe_allow_html=True)
         # Add padding between rows
         st.markdown("<div style='padding: 10px;'></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
+
 # Top 10 Books of All Times section
 if 'show_top_books' not in st.session_state:
     st.session_state.show_top_books = False
@@ -82,7 +142,8 @@ if st.session_state.show_top_books:
                 book = top_books.iloc[i + idx]
                 with col:
                     st.image(book['Image-URL-M'], width=100)
-                    st.write(f"**{book['Book-Title']}** by {book['Book-Author']}")
+                    st.markdown(f"<div class='book-title'>{book['Book-Title']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='book-author'>by {book['Book-Author']}</div>", unsafe_allow_html=True)
         # Add padding between rows
         st.markdown("<div style='padding: 10px;'></div>", unsafe_allow_html=True)
 
@@ -97,7 +158,7 @@ st.markdown(
         width: 100%;
         background-color: black;
         text-align: center;
-        padding: 10px 0;
+        padding: 5px 0;
         color: yellow;
         font-size: 14px;
         text-shadow: 2px 2px 5px red;
